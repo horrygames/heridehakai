@@ -1,0 +1,1 @@
+{"description":"ヘリde破壊 世界ランキング用サーバー","engines":{"node":">=18"},"main":"server.js","name":"heridehakai-ranking","private":true,"scripts":{"start":"node server.js"},"version":"1.0.0"}
