@@ -55,7 +55,7 @@ async function sbGetRanking(limit) {
   const q =
     "select=id,nickname,score,yen,stage,created_at&order=score.desc,id.asc&limit=" + limit;
   const res = await fetch(SB_URL + "/rest/v1/scores?" + q, { headers: sbHeaders() });
-  if (!res.ok) throw new Error("supabase get failed: " + res.status);
+  if (!res.ok) { const t = await res.text(); console.error("supabase get failed:", res.status, t.slice(0,300)); throw new Error("supabase get failed: " + res.status); }
   const entries = await res.json();
   let total = entries.length;
   try {
@@ -69,7 +69,7 @@ async function sbSubmit(nickname, score, yen, stage) {
     headers: sbHeaders({ Prefer: "return=representation" }),
     body: JSON.stringify({ nickname, score, yen, stage }),
   });
-  if (!res.ok) throw new Error("supabase post failed: " + res.status);
+  if (!res.ok) { const t = await res.text(); console.error("supabase post failed:", res.status, t.slice(0,300)); throw new Error("supabase post failed: " + res.status); }
   const rows = await res.json();
   const entry = rows[0];
   if (!entry) throw new Error("supabase post: no row returned");
@@ -109,6 +109,17 @@ const server = http.createServer(async (req, res) => {
     return res.end(
       "ヘリde破壊 ランキングサーバーは動いてるよ（保存先: " + (USE_SB ? "Supabase" : "ファイル") + "）"
     );
+  }
+
+  if (url.pathname === "/api/health" && req.method === "GET") {
+    if (!USE_SB) return sendJson(res, 200, { storage: "file" });
+    try {
+      const r = await fetch(SB_URL + "/rest/v1/scores?select=id&limit=1", { headers: sbHeaders() });
+      const t = await r.text();
+      return sendJson(res, 200, { storage: "supabase", upstream_status: r.status, upstream_body: t.slice(0, 200) });
+    } catch (e) {
+      return sendJson(res, 200, { storage: "supabase", fetch_error: String(e && e.message || e) });
+    }
   }
 
   if (url.pathname === "/api/ranking" && req.method === "GET") {
