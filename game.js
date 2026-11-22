@@ -3124,7 +3124,7 @@ var pts=new THREE.Points(geo,mat); scene.add(pts);
 effects.push({kind:'smoke',mesh:pts,vels:[new THREE.Vector3(rand(-0.6,0.6),up,rand(-0.6,0.6))],t:0,dur:dur});
 }
 function spawnDust(pos,w){
-var n=22; var geo=new THREE.BufferGeometry(); var positions=new Float32Array(n*3); var vels=[];
+var n=14; var geo=new THREE.BufferGeometry(); var positions=new Float32Array(n*3); var vels=[];
 for(var i=0;i<n;i++){ var a=rand(0,Math.PI*2), r=rand(0,w*0.55); positions[i*3]=pos.x+Math.cos(a)*r; positions[i*3+1]=rand(0.4,2.2); positions[i*3+2]=pos.z+Math.sin(a)*r; vels.push(new THREE.Vector3(Math.cos(a)*rand(3,8),rand(1.5,4.5),Math.sin(a)*rand(3,8)));}
 geo.setAttribute('position',new THREE.BufferAttribute(positions,3));
 var mat=new THREE.PointsMaterial({size:4.2,map:texPuff,color:0x9a8d7a,transparent:true,opacity:0.62,depthWrite:false});
@@ -3143,7 +3143,7 @@ if(chunkPool.length>=20) return null;
 var m=new THREE.Mesh(chunkGeo,chunkMat); m.visible=false; m.castShadow=true; scene.add(m); chunkPool.push(m); return m;
 }
 function spawnExplosion(pos,big){
-var scale=big?2.3:1.25;
+var scale=big?1.9:1.05;
 // white flash sprite — the violent first instant
 var flash=new THREE.Sprite(new THREE.SpriteMaterial({map:texGlow,color:0xffe9b0,transparent:true,opacity:0.95,depthWrite:false,blending:THREE.AdditiveBlending}));
 flash.position.copy(pos); flash.position.y+=1; scene.add(flash);
@@ -3169,15 +3169,11 @@ effects.push({kind:'ring',mesh:ring,t:0,dur:0.55,scale:scale,rate:17,op0:0.55});
 var ring2=new THREE.Mesh(new THREE.TorusGeometry(1,0.55,6,30),new THREE.MeshBasicMaterial({color:0xa89880,transparent:true,opacity:0.4,depthWrite:false}));
 ring2.rotation.x=Math.PI/2; ring2.position.set(pos.x,0.65,pos.z); scene.add(ring2);
 effects.push({kind:'ring',mesh:ring2,t:0,dur:0.85,scale:scale,rate:26,op0:0.4});
-// third ring: a thin, fast pressure front that outruns the dust
-var ring3=new THREE.Mesh(new THREE.TorusGeometry(1,0.14,6,30),new THREE.MeshBasicMaterial({color:0xfff6e0,transparent:true,opacity:0.5,depthWrite:false,blending:THREE.AdditiveBlending}));
-ring3.rotation.x=Math.PI/2; ring3.position.set(pos.x,Math.max(0.8,pos.y*0.35),pos.z); scene.add(ring3);
-effects.push({kind:'ring',mesh:ring3,t:0,dur:0.34,scale:scale,rate:38,op0:0.5});
 var light=new THREE.PointLight(0xff8c30,big?5:2.8,30+26*scale); light.position.copy(pos); light.position.y+=2; scene.add(light);
 effects.push({kind:'light',mesh:light,t:0,dur:big?0.7:0.55,i0:big?5.5:2.8});
 // rising dark smoke — one plain single-colour cloud, as it was before
 // the explosion buff added the extra multi-coloured particle layers
-var n=big?24:14;
+var n=big?16:10;
 var geo=new THREE.BufferGeometry();
 var positions=new Float32Array(n*3); var vels=[];
 for(var i=0;i<n;i++){
@@ -3188,12 +3184,12 @@ vels.push(new THREE.Vector3(Math.cos(a)*sp,rand(4,9)*scale,Math.sin(a)*sp));
 geo.setAttribute('position',new THREE.BufferAttribute(positions,3));
 var mat=new THREE.PointsMaterial({size:big?5.2:3.8,map:texPuff,color:0x3a3733,transparent:true,opacity:0.8,depthWrite:false});
 var pts=new THREE.Points(geo,mat); scene.add(pts);
-effects.push({kind:'smoke',mesh:pts,vels:vels,t:0,dur:rand(2.2,3.2),size0:mat.size,grow:1.6});
+effects.push({kind:'smoke',mesh:pts,vels:vels,t:0,dur:rand(1.6,2.4),size0:mat.size,grow:1.6});
 // tan dust rolling outward at ground level + a scorch mark left on the ground
 if(pos.y<16)spawnDust(pos, big?21:12);
 if(pos.y<9)addScorch(pos,scale);
 // solid tumbling chunks that bounce off the ground
-var cn=big?7:3;
+var cn=big?5:2;
 for(var ci3=0;ci3<cn;ci3++){
 var chk=getChunk(); if(!chk)break;
 var bs=rand(0.5,big?1.8:1.15);
@@ -3203,7 +3199,7 @@ effects.push({kind:'chunk',mesh:chk,vel:new THREE.Vector3(Math.cos(ca)*cs2,rand(
 }
 // delayed secondary cook-off burst — real blasts rarely go up all at once:
 // a fraction of a second later a second fireball punches up through the smoke
-if(big||Math.random()<0.45){
+if(big&&Math.random()<0.6){
 (function(dly,ss2){
 pendingFx.push({t:dly,fn:function(){
 var p2=pos.clone(); p2.x+=rand(-1.2,1.2); p2.z+=rand(-1.2,1.2); p2.y+=rand(0.2,1.4);
@@ -3220,7 +3216,7 @@ spawnPuff(p2.clone(),0x2e2b27,4.5,3.2,2.4,0.6);
 // a blast under the rotor is a kick
 var shD=pos.distanceTo(heliState.pos);
 var shF=clamp(1.15-shD/110,0.12,1);
-shake=Math.min(shake+(big?1.9:0.85)*shF,2.6);
+shake=Math.min(shake+(big?1.4:0.6)*shF,2.0);
 sExplosion(big);
 }
 function updateEffects(dt){
